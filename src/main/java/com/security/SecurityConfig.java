@@ -1,5 +1,6 @@
 package com.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -13,14 +14,18 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
-
+    @Autowired
+    DataSource dataSource;
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -29,7 +34,10 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http){
-       return http.authorizeHttpRequests(req->
+       return http
+               .csrf(customizer->customizer.disable())
+               .headers(header->header.frameOptions(frame->frame.sameOrigin()))
+               .authorizeHttpRequests(req->
                req.requestMatchers("/h2-console/**").permitAll()
                        .anyRequest().authenticated())
                .sessionManagement(session-> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -50,7 +58,11 @@ public class SecurityConfig {
                 .roles("ADMIN")
                 .build();
 
-        return  new InMemoryUserDetailsManager(user1,user2);
+        JdbcUserDetailsManager jdbcUserDetailsManager=new JdbcUserDetailsManager(dataSource);
+        jdbcUserDetailsManager.createUser(user1);
+        jdbcUserDetailsManager.createUser(user2);
+
+        return  jdbcUserDetailsManager;
 
     }
 }
