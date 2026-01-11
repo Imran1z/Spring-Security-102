@@ -36,7 +36,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http){
        return http
                .csrf(customizer->customizer.disable())
-               .headers(header->header.frameOptions(frame->frame.sameOrigin()))
+               .headers(header->header.frameOptions(frame->frame.sameOrigin() ))
                .authorizeHttpRequests(req->
                req.requestMatchers("/h2-console/**").permitAll()
                        .anyRequest().authenticated())
